@@ -147,7 +147,7 @@ django.jQuery(function ($) {
             Dropzone.autoDiscover = false;
         }
         dropzones.each(createDropzone);
-        $('.add-row a').on('click', function () {
+        $(document).on('formset:added', function (ev, row) {
             var dropzones = $(dropzoneSelector);
             dropzones.each(createDropzone);
         });
