@@ -17,7 +17,7 @@ from . import mixins
 from .. import settings as filer_settings
 from ..fields.multistorage_file import MultiStorageFileField
 from ..utils.compatibility import python_2_unicode_compatible
-from .foldermodels import Folder
+from .foldermodels import Folder, GenericPermissionMixin
 
 try:
     from polymorphic.models import PolymorphicModel
@@ -42,7 +42,7 @@ class FileManager(PolymorphicManager):
 
 
 @python_2_unicode_compatible
-class File(PolymorphicModel, mixins.IconsMixin):
+class File(PolymorphicModel, mixins.IconsMixin, GenericPermissionMixin):
     file_type = 'File'
     _icon = "file"
     _file_data_changed_hint = None
@@ -222,23 +222,6 @@ class File(PolymorphicModel, mixins.IconsMixin):
 
     def has_add_children_permission(self, request):
         return self.has_generic_permission(request, 'add_children')
-
-    def has_generic_permission(self, request, permission_type):
-        """
-        Return true if the current user has permission on this
-        image. Return the string 'ALL' if the user has all rights.
-        """
-        user = request.user
-        if not user.is_authenticated():
-            return False
-        elif user.is_superuser:
-            return True
-        elif user == self.owner:
-            return True
-        elif self.folder:
-            return self.folder.has_generic_permission(request, permission_type)
-        else:
-            return False
 
     def __str__(self):
         if self.name in ('', None):
