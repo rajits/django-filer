@@ -17,7 +17,7 @@ from . import mixins
 from .. import settings as filer_settings
 from ..fields.multistorage_file import MultiStorageFileField
 from ..utils.compatibility import python_2_unicode_compatible
-from .foldermodels import Folder
+from .foldermodels import Folder, FolderPermission
 
 try:
     from polymorphic.models import PolymorphicModel
@@ -238,7 +238,26 @@ class File(PolymorphicModel, mixins.IconsMixin):
         elif self.folder:
             return self.folder.has_generic_permission(request, permission_type)
         else:
-            return False
+            if not hasattr(self, "permission_cache") or\
+               permission_type not in self.permission_cache or \
+               request.user.pk != self.permission_cache['user'].pk:
+                if not hasattr(self, "permission_cache") or request.user.pk != self.permission_cache['user'].pk:
+                    self.permission_cache = {
+                        'user': request.user,
+                    }
+
+                # This calls methods on the manager i.e. get_read_id_list()
+                func = getattr(FolderPermission.objects,
+                               "get_%s_id_list" % permission_type)
+                permission = func(user)
+                if permission == "All":
+                    self.permission_cache[permission_type] = True
+                    self.permission_cache['read'] = True
+                    self.permission_cache['edit'] = True
+                    self.permission_cache['add_children'] = True
+                else:
+                    self.permission_cache[permission_type] = self.id in permission
+            return self.permission_cache[permission_type]
 
     def __str__(self):
         if self.name in ('', None):
