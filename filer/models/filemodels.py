@@ -41,6 +41,12 @@ class FileManager(PolymorphicManager):
         return [i for i in self.exclude(pk=file_obj.pk).filter(sha1=file_obj.sha1)]
 
 
+def is_public_default():
+    # not using this setting directly as `is_public` default value
+    # so that Django doesn't generate new migrations upon setting change
+    return filer_settings.FILER_IS_PUBLIC_DEFAULT
+
+
 @python_2_unicode_compatible
 class File(PolymorphicModel, mixins.IconsMixin):
     file_type = 'File'
@@ -70,7 +76,7 @@ class File(PolymorphicModel, mixins.IconsMixin):
     modified_at = models.DateTimeField(_('modified at'), auto_now=True)
 
     is_public = models.BooleanField(
-        default=filer_settings.FILER_IS_PUBLIC_DEFAULT,
+        default=is_public_default,
         verbose_name=_('Permissions disabled'),
         help_text=_('Disable any permission checking for this '
                     'file. File will be publicly accessible '
@@ -300,9 +306,9 @@ class File(PolymorphicModel, mixins.IconsMixin):
     @property
     def canonical_time(self):
         if settings.USE_TZ:
-            return int((self.uploaded_at - datetime(1970, 1, 1, tzinfo=timezone.utc)).total_seconds())
+            return int((self.uploaded_at - datetime(1970, 1, 1, 1, tzinfo=timezone.utc)).total_seconds())
         else:
-            return int((self.uploaded_at - datetime(1970, 1, 1)).total_seconds())
+            return int((self.uploaded_at - datetime(1970, 1, 1, 1)).total_seconds())
 
     @property
     def canonical_url(self):
