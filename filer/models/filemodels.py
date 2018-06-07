@@ -17,7 +17,11 @@ from . import mixins
 from .. import settings as filer_settings
 from ..fields.multistorage_file import MultiStorageFileField
 from ..utils.compatibility import python_2_unicode_compatible
+<<<<<<< HEAD
 from .foldermodels import Folder, GenericPermissionMixin
+=======
+from .foldermodels import Folder, FolderPermission
+>>>>>>> develop
 
 try:
     from polymorphic.models import PolymorphicModel
@@ -39,6 +43,12 @@ class FileManager(PolymorphicManager):
 
     def find_duplicates(self, file_obj):
         return [i for i in self.exclude(pk=file_obj.pk).filter(sha1=file_obj.sha1)]
+
+
+def is_public_default():
+    # not using this setting directly as `is_public` default value
+    # so that Django doesn't generate new migrations upon setting change
+    return filer_settings.FILER_IS_PUBLIC_DEFAULT
 
 
 @python_2_unicode_compatible
@@ -70,7 +80,7 @@ class File(PolymorphicModel, mixins.IconsMixin, GenericPermissionMixin):
     modified_at = models.DateTimeField(_('modified at'), auto_now=True)
 
     is_public = models.BooleanField(
-        default=filer_settings.FILER_IS_PUBLIC_DEFAULT,
+        default=is_public_default,
         verbose_name=_('Permissions disabled'),
         help_text=_('Disable any permission checking for this '
                     'file. File will be publicly accessible '
@@ -264,9 +274,9 @@ class File(PolymorphicModel, mixins.IconsMixin, GenericPermissionMixin):
     @property
     def canonical_time(self):
         if settings.USE_TZ:
-            return int((self.uploaded_at - datetime(1970, 1, 1, tzinfo=timezone.utc)).total_seconds())
+            return int((self.uploaded_at - datetime(1970, 1, 1, 1, tzinfo=timezone.utc)).total_seconds())
         else:
-            return int((self.uploaded_at - datetime(1970, 1, 1)).total_seconds())
+            return int((self.uploaded_at - datetime(1970, 1, 1, 1)).total_seconds())
 
     @property
     def canonical_url(self):
