@@ -96,7 +96,7 @@ class GenericPermissionMixin(object):
             return True
         elif user == self.owner:
             return True
-        elif hasattr(self, "folder"):
+        elif hasattr(self, "folder") and self.folder:
             return self.folder.has_generic_permission(request, permission_type)
         else:
             if not hasattr(self, "permission_cache") or\
